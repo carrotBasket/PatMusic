@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PatMusicONE - Music Player</title>
+    <style>
+        body {
+            font-family: Monaco, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .audio-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .audio-players {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .waveform-box {
+            margin-bottom: 25px;
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+            width: 600px;
+        }
+
+        .description {
+            max-width: 300px;
+        }
+
+        img {
+            width: 100%;
+            max-width: 455px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            margin-top: 10px;
+        }
+
+        .controls button {
+            margin-right: 10px;
+            padding: 5px 12px;
+        }
+
+        #drop_zone {
+            border: 2px dashed #999;
+            padding: 20px;
+            text-align: center;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            color: #444;
+            background-color: #fafafa;
+        }
+
+        #playlist {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #playlist li {
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        #playlist li:hover {
+            background-color: #eee;
+        }
+        .controls button {
+            padding: 8px 16px;
+            margin-right: 8px;
+            border: none;
+            border-radius: 4px;
+            background-color: #e5e5e5;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .controls button:hover {
+            background-color: #8e8e8e;
+        }
+        .icon-btn {
+            font-size: 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: transform 0.2s ease;
+            color:white;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.2);
+        }
+
+    </style>
+</head>
+<body>
+<h1>Welcome to PatMusic</h1>
+
+<div class="audio-container">
+    <div class="audio-players"></div>
+    <div class="description">
+        <p>Enjoy your favorite music with PatMusic! Listen to jazz, lo-fi, and more—all from your local collection.</p>
+    </div>
+</div>
+
+<div id="drop_zone">Drop your audio files here</div>
+<ul id="playlist"></ul>
+<audio id="audioPlayer" controls></audio>
+
+<script type="module">
+    import WaveSurfer from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.esm.js';
+
+    const audioFiles = [
+        {
+            name: "Light Study",
+            url: "file:///Users/patlee/WebstormProjects/Music/LunarFractals.mp3"
+        },
+        {
+            name: "Normal Study",
+            url: "file:///Users/patlee/WebstormProjects/Music/lost-in-the-echo-lofi-269885.mp3"
+        },
+        {
+            name: "Relax",
+            url: "file:///Users/patlee/WebstormProjects/Music/Jazz.mp3"
+        },
+        {
+            name: "Deep Study",
+            url: "file:///Users/patlee/WebstormProjects/Music/Echo.mp3"
+        }
+    ];
+
+    const container = document.querySelector('.audio-players');
+
+    audioFiles.forEach((track, index) => {
+        const box = document.createElement('div');
+        box.className = 'waveform-box';
+
+        const title = document.createElement('p');
+        title.textContent = track.name;
+        title.style.fontWeight = 'bold';
+        box.appendChild(title);
+
+        const waveDiv = document.createElement('div');
+        waveDiv.id = `waveform-${index}`;
+        box.appendChild(waveDiv);
+
+        const controls = document.createElement('div');
+        controls.className = 'controls';
+
+        const playBtn = document.createElement('button');
+        playBtn.textContent = 'Play';
+        playBtn.textContent = '▶️';
+        playBtn.className = 'icon-btn';
+        const pauseBtn = document.createElement('button');
+        pauseBtn.textContent = 'Pause';
+        pauseBtn.textContent = '⏸️';
+        pauseBtn.className = 'icon-btn';
+
+        controls.appendChild(playBtn);
+        controls.appendChild(pauseBtn);
+        box.appendChild(controls);
+
+        container.appendChild(box);
+
+        const wave = WaveSurfer.create({
+            container: `#waveform-${index}`,
+            waveColor: '#708090',
+            progressColor: '#556B2F',
+            height: 30,
+            url: track.url
+        });
+
+        playBtn.addEventListener('click', () => wave.play());
+        pauseBtn.addEventListener('click', () => wave.pause());
+    });
+
+    // Drag & Drop Upload Logic
+    const dropZone = document.getElementById("drop_zone");
+    const playlistElement = document.getElementById("playlist");
+    const audioPlayer = document.getElementById("audioPlayer");
+    const playlist = [];
+
+    dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = "#f0f0f0";
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+        dropZone.style.backgroundColor = "#fafafa";
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = "#fafafa";
+
+        const files = Array.from(e.dataTransfer.files);
+        files.forEach((file) => {
+            if (file.type.startsWith("audio/")) {
+                const url = URL.createObjectURL(file);
+                playlist.push({ name: file.name, url });
+
+                const li = document.createElement("li");
+                li.textContent = file.name;
+                li.addEventListener("click", () => {
+                    audioPlayer.src = url;
+                    audioPlayer.play();
+                });
+                playlistElement.appendChild(li);
+            }
+        });
+    });
+</script>
+</body>
+</html>
